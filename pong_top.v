@@ -141,7 +141,7 @@ module pong_top
    // rgb multiplexing circuit
    //=======================================================
    always @*
-      if (~SW[2])
+      if (~video_on)
          rgb_next = "000"; // blank the edge/retrace
       else
          // display score, rule, or game over

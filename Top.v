@@ -55,11 +55,12 @@ module Top(
 	wire [4:0] keyCode;
 	wire keyReady;
 	Keypad k0 (.clk(clkdiv[15]), .keyX(BTN_Y), .keyY(BTN_X), 
-	       .keyCode(keyCode), .ready(keyReady));
+	   .keyCode(keyCode), .ready(keyReady));
 	
 	wire [31:0] segTestData;
 	wire [3:0]sout;
-    Seg7Device segDevice(.clkIO(clkdiv[3]), .clkScan(clkdiv[15:14]), .clkBlink(clkdiv[25]),
+    Seg7Device segDevice(.clkIO(clkdiv[3]), 
+        .clkScan(clkdiv[15:14]), .clkBlink(clkdiv[25]),
 		.data(segTestData), .point(8'h0), .LES(8'h0),
 		.sout(sout));
 	assign SEGLED_CLK = sout[3];
@@ -77,44 +78,71 @@ module Top(
 	wire [19:0] x_sqr, y_sqr, r_sqr;
 	
 	vgac v0 (
-		.vga_clk(clkdiv[1]), .clrn(SW_OK[0]), .d_in(vga_data), .row_addr(row_addr), .col_addr(col_addr), .r(r), .g(g), .b(b), .hs(hs), .vs(vs)
+		.vga_clk(clkdiv[1]), .clrn(SW_OK[0]), .d_in(vga_data), 
+		.row_addr(row_addr), .col_addr(col_addr), 
+		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
 	);
 	reg wasReady;
-	reg [9:0] radius = 10'd15;
-	always @(posedge clk) begin
-		if (!rstn) begin
-			x <= 10'd320;
-			y <= 9'd240;
-			radius <= 10'd15;
-		end else begin
-			wasReady <= keyReady;
-			if (!wasReady&&keyReady) begin
-				case (keyCode)
-					5'h10: radius <= radius - 10'd5;
-					5'h12: radius <= radius + 10'd5;
-					5'hc: x <= x - 10'd20;
-					5'he: x <= x + 10'd20;
-					5'h9: y <= y - 9'd20;
-					5'h11: y <= y + 9'd20;
-					default: ;
-				endcase
-			end
-		end
-	end
+//	reg [9:0] radius = 10'd15;
+//	always @(posedge clk) begin
+//		if (!rstn) begin
+//			x <= 10'd320;
+//			y <= 9'd240;
+//			radius <= 10'd15;
+//		end else begin
+//			wasReady <= keyReady;
+//			if (!wasReady&&keyReady) begin
+//				case (keyCode)
+//					5'h10: radius <= radius - 10'd5;
+//					5'h12: radius <= radius + 10'd5;
+//					5'hc: x <= x - 10'd20;
+//					5'he: x <= x + 10'd20;
+//					5'h9: y <= y - 9'd20;
+//					5'h11: y <= y + 9'd20;
+//					default: ;
+//				endcase
+//			end
+//		end
+//	end
 	
-	assign x_sqr = (x - col_addr) * (x - col_addr);
-	assign y_sqr = (y - row_addr) * (y - row_addr);
-	assign r_sqr = radius * radius;
+//    always @*
+//      if (~SW[2])
+//         rgb_next = "000"; // blank the edge/retrace
+//      else
+//         // display score, rule, or game over
+//         if (text_on[3] ||
+//               ((state_reg==newgame) && text_on[1]) || // rule
+//               ((state_reg==over) && text_on[0]))
+//            rgb_next = text_rgb;
+//         else if (graph_on)  // display graph
+//           rgb_next = graph_rgb;
+//         else if (text_on[2]) // display logo
+//           rgb_next = text_rgb;
+//         else
+//           rgb_next = 3'b110; // yellow background
+   
+   // output
+    always@(*) begin
+//        vga_data <= {{4{rgb_reg[2]}}, {4{rgb_reg[1]}}, {4{rgb_reg[0]}}};
+        vga_data <= 12'b111111110000;
+    end
 	
-	always@(*) begin
-		if ((x_sqr + y_sqr < r_sqr))
-			vga_data <= SW[12:1];
-		else vga_data <= 12'hfff;
-	end
+//	assign x_sqr = (x - col_addr) * (x - col_addr);
+//	assign y_sqr = (y - row_addr) * (y - row_addr);
+//	assign r_sqr = radius * radius;
+	
+//	always@(*) begin
+//		if ((x_sqr + y_sqr < r_sqr))
+//			vga_data <= SW[12:1];
+//		else vga_data <= 12'hfff;
+//	end
+
+
 	assign segTestData = {7'b0,x,8'b0,y};
 	wire [15:0] ledData;
 	assign ledData = SW_OK;
-	ShiftReg #(.WIDTH(16)) ledDevice (.clk(clkdiv[3]), .pdata(~ledData), .sout({LED_CLK,LED_DO,LED_PEN,LED_CLR}));
+	ShiftReg #(.WIDTH(16)) ledDevice (.clk(clkdiv[3]), 
+	.pdata(~ledData), .sout({LED_CLK,LED_DO,LED_PEN,LED_CLR}));
 
 	///////////////
 	// Pong part //
