@@ -41,7 +41,9 @@ module Top(
 	inout [3:0]BTN_Y,
 	output buzzer
     );
-	
+	///////////////
+	// Demo part //
+	///////////////
 	reg [31:0]clkdiv;
 	always@(posedge clk) begin
 		clkdiv <= clkdiv + 1'b1;
@@ -52,11 +54,12 @@ module Top(
 	
 	wire [4:0] keyCode;
 	wire keyReady;
-	Keypad k0 (.clk(clkdiv[15]), .keyX(BTN_Y), .keyY(BTN_X), .keyCode(keyCode), .ready(keyReady));
+	Keypad k0 (.clk(clkdiv[15]), .keyX(BTN_Y), .keyY(BTN_X), 
+	       .keyCode(keyCode), .ready(keyReady));
 	
 	wire [31:0] segTestData;
 	wire [3:0]sout;
-   Seg7Device segDevice(.clkIO(clkdiv[3]), .clkScan(clkdiv[15:14]), .clkBlink(clkdiv[25]),
+    Seg7Device segDevice(.clkIO(clkdiv[3]), .clkScan(clkdiv[15:14]), .clkBlink(clkdiv[25]),
 		.data(segTestData), .point(8'h0), .LES(8'h0),
 		.sout(sout));
 	assign SEGLED_CLK = sout[3];
@@ -112,4 +115,11 @@ module Top(
 	wire [15:0] ledData;
 	assign ledData = SW_OK;
 	ShiftReg #(.WIDTH(16)) ledDevice (.clk(clkdiv[3]), .pdata(~ledData), .sout({LED_CLK,LED_DO,LED_PEN,LED_CLR}));
+
+	///////////////
+	// Pong part //
+	///////////////
+	
+
+
 endmodule
