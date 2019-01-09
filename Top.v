@@ -33,7 +33,7 @@ module Top(
 	output SEGLED_CLR,
 	output SEGLED_DO,
 	output SEGLED_PEN,
-   output LED_CLK,
+    output LED_CLK,
 	output LED_CLR,
 	output LED_DO,
 	output LED_PEN,
@@ -130,7 +130,7 @@ module Top(
    //=======================================================
 	   // instantiate graph module
     pong_graph graph_unit
-        (.clk(clk), .reset(!rstn), .btn(SW),
+        (.clk(clk), .reset(!rstn), .btn(keyCode),
         .pix_x(col_addr), .pix_y(row_addr),
         .gra_still(gra_still), .hit(hit), .miss(miss),
         .graph_on(graph_on), .graph_rgb(graph_rgb));

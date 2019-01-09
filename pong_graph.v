@@ -2,7 +2,7 @@
 module pong_graph 
    (
     input wire clk, reset,
-    input wire [1:0] btn,
+    input wire [4:0] btn,
     input wire [9:0] pix_x, pix_y,
     input wire gra_still,
     output wire graph_on,
@@ -128,9 +128,9 @@ module pong_graph
       if (gra_still) // initial position of paddle
          bar_y_next = (MAX_Y-BAR_Y_SIZE)/2;
       else if (refr_tick)
-         if (btn[1] & (bar_y_b < (MAX_Y-1-BAR_V)))
+         if ((btn == 5'h10) & (bar_y_b < (MAX_Y-1-BAR_V)))
             bar_y_next = bar_y_reg + BAR_V; // move down
-         else if (btn[0] & (bar_y_t > BAR_V)) 
+         else if ((btn == 5'hc) & (bar_y_t > BAR_V)) 
             bar_y_next = bar_y_reg - BAR_V; // move up
    end 
 
