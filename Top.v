@@ -72,13 +72,13 @@ module Top(
 	reg [9:0] x;
 	reg [8:0] y;
 	
- 	reg [11:0] vga_data;
+ 	reg [11:0] rgb_reg, rgb_next;
  	wire [9:0] col_addr;
- 	wire [8:0] row_addr;
+ 	wire [9:0] row_addr;
 	wire [19:0] x_sqr, y_sqr, r_sqr;
 	
 	vgac v0 (
-		.vga_clk(clkdiv[1]), .clrn(SW_OK[0]), .d_in(vga_data), 
+		.vga_clk(clkdiv[1]), .clrn(SW_OK[15]), .d_in(rgb_reg), 
 		.row_addr(row_addr), .col_addr(col_addr), 
 		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
 	);
@@ -105,27 +105,77 @@ module Top(
 //		end
 //	end
 	
-//    always @*
-//      if (~SW[2])
-//         rgb_next = "000"; // blank the edge/retrace
-//      else
-//         // display score, rule, or game over
+    ///////////////////
+	// Breakout part //
+	///////////////////
+    localparam  [1:0]
+        newgame = 2'b00,
+        play    = 2'b01,
+        newball = 2'b10,
+        over    = 2'b11;
+        
+	
+	reg [1:0] state_reg, state_next;
+	reg [1:0] ball_reg, ball_next;
+	wire video_on, graph_on;
+	wire [11:0] graph_rgb, text_rgb;
+	
+	reg gra_still;
+	wire hit, miss;
+	
+	assign video_on = 1'b1;
+	
+   //=======================================================
+   // instantiation
+   //=======================================================
+	   // instantiate graph module
+    pong_graph graph_unit
+        (.clk(clk), .reset(!rstn), .btn(SW),
+        .pix_x(col_addr), .pix_y(row_addr),
+        .gra_still(gra_still), .hit(hit), .miss(miss),
+        .graph_on(graph_on), .graph_rgb(graph_rgb));
+	
+
+   //=======================================================
+   // finite state machine
+   //=======================================================
+	always @(posedge clk, negedge rstn)
+       if (!rstn)
+          begin
+             state_reg <= newgame;
+             ball_reg <= 0;
+             rgb_reg <= 12'h000;
+          end
+       else
+          begin
+            state_reg <= state_next;
+            ball_reg <= ball_next;
+//            if (pixel_tick)
+               rgb_reg <= rgb_next;
+          end
+	
+    always @*
+      if (~video_on)
+         rgb_next = "000"; // blank the edge/retrace
+      else
+         // display score, rule, or game over
 //         if (text_on[3] ||
 //               ((state_reg==newgame) && text_on[1]) || // rule
 //               ((state_reg==over) && text_on[0]))
 //            rgb_next = text_rgb;
-//         else if (graph_on)  // display graph
-//           rgb_next = graph_rgb;
+//         else 
+            if (graph_on)  // display graph
+           rgb_next = graph_rgb;
 //         else if (text_on[2]) // display logo
 //           rgb_next = text_rgb;
-//         else
-//           rgb_next = 3'b110; // yellow background
+         else
+           rgb_next = 12'hff0; // yellow background
    
    // output
-    always@(*) begin
+//    always @* begin
 //        vga_data <= {{4{rgb_reg[2]}}, {4{rgb_reg[1]}}, {4{rgb_reg[0]}}};
-        vga_data <= 12'b111111110000;
-    end
+//        vga_data <= rgb_reg;
+//    end
 	
 //	assign x_sqr = (x - col_addr) * (x - col_addr);
 //	assign y_sqr = (y - row_addr) * (y - row_addr);
@@ -143,11 +193,6 @@ module Top(
 	assign ledData = SW_OK;
 	ShiftReg #(.WIDTH(16)) ledDevice (.clk(clkdiv[3]), 
 	.pdata(~ledData), .sout({LED_CLK,LED_DO,LED_PEN,LED_CLR}));
-
-	///////////////
-	// Pong part //
-	///////////////
-	
 
 
 endmodule

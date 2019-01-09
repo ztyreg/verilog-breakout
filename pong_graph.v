@@ -7,7 +7,7 @@ module pong_graph
     input wire gra_still,
     output wire graph_on,
     output reg hit, miss,
-    output reg [2:0] graph_rgb
+    output reg [11:0] graph_rgb
    );
 
    // costant and signal declaration
@@ -61,7 +61,7 @@ module pong_graph
    // object output signals
    //--------------------------------------------
    wire wall_on, bar_on, sq_ball_on, rd_ball_on;
-   wire [2:0] wall_rgb, bar_rgb, ball_rgb;
+   wire [11:0] wall_rgb, bar_rgb, ball_rgb;
   
    // body 
    //--------------------------------------------
@@ -108,7 +108,7 @@ module pong_graph
    // pixel within wall
    assign wall_on = (WALL_X_L<=pix_x) && (pix_x<=WALL_X_R);
    // wall rgb output
-   assign wall_rgb = 3'b001; // blue
+   assign wall_rgb = 12'h00f; // blue
 
    //--------------------------------------------
    // right vertical bar
@@ -120,7 +120,7 @@ module pong_graph
    assign bar_on = (BAR_X_L<=pix_x) && (pix_x<=BAR_X_R) &&
                    (bar_y_t<=pix_y) && (pix_y<=bar_y_b); 
    // bar rgb output
-   assign bar_rgb = 3'b010; // green
+   assign bar_rgb = 12'h0f0; // green
    // new bar y-position
    always @*
    begin
@@ -153,7 +153,7 @@ module pong_graph
    // pixel within ball
    assign rd_ball_on = sq_ball_on & rom_bit;
    // ball rgb output
-   assign ball_rgb = 3'b100;   // red
+   assign ball_rgb = 12'hf00;   // red
   
    // new ball position
    assign ball_x_next = (gra_still) ? MAX_X/2 :
@@ -202,7 +202,7 @@ module pong_graph
       else if (rd_ball_on)
            graph_rgb = ball_rgb;
       else
-            graph_rgb = 3'b110; // yellow background
+            graph_rgb = 12'hff0; // yellow background
    // new graphic_on signal
    assign graph_on = wall_on | bar_on | rd_ball_on;
 
