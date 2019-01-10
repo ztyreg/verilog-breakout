@@ -76,12 +76,18 @@ module Top(
  	wire [9:0] col_addr;
  	wire [9:0] row_addr;
 	wire [19:0] x_sqr, y_sqr, r_sqr;
+    wire [11:0] ip_out;
+    wire [11:0] data_in;
+    
+    wire video_on, graph_on;
+    
+    assign data_in = (graph_on)? rgb_reg : ip_out;
 	
-//	vgac v0 (
-//		.vga_clk(clkdiv[1]), .clrn(SW_OK[15]), .d_in(rgb_reg), 
-//		.row_addr(row_addr), .col_addr(col_addr), 
-//		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
-//	);
+	vgac v0 (
+		.vga_clk(clkdiv[1]), .clrn(SW_OK[15]), .d_in(data_in), 
+		.row_addr(row_addr), .col_addr(col_addr), 
+		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
+	);
 	reg wasReady;
 //	reg [9:0] radius = 10'd15;
 //	always @(posedge clk) begin
@@ -117,7 +123,7 @@ module Top(
 	
 	reg [1:0] state_reg, state_next;
 	reg [1:0] ball_reg, ball_next;
-	wire video_on, graph_on;
+	
 	wire [11:0] graph_rgb, text_rgb;
 	
 	reg gra_still;
@@ -187,19 +193,19 @@ module Top(
 //		else vga_data <= 12'hfff;
 //	end
     wire [18:0] d;
-    wire [11:0] ip_out;
+
     
-    vgaIP ip1(.clock(clk),
-        .rst(!rstn),
-        .disp_RGB(ip_out),
-        .disp_b(b),
-        .disp_g(g),
-        .disp_r(r),
-        .h_addr(col_addr),
-        .v_addr(row_addr),    
-        .hsync(hs),
-        .vsync(vs)
-    );
+//    vgaIP ip1(.clock(clk),
+//        .rst(!rstn),
+//        .disp_RGB({ip_out[11:4], 4'hf}),
+//        .disp_b(b),
+//        .disp_g(g),
+//        .disp_r(r),
+//        .h_addr(col_addr),
+//        .v_addr(row_addr),    
+//        .hsync(hs),
+//        .vsync(vs)
+//    );
     
     
     blk_mem_gen_0(.clka(clk), .addra(d), .douta(ip_out));

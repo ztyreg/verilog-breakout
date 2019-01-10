@@ -252,45 +252,75 @@ module pong_graph
                  (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && 
                  (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
             begin
-                bricks_destroyed[j] = 1;
                 if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
                      (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // br<r
                      (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
                      (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bt<b
-                begin // if ball in brick region
-                  x_delta_next = BALL_V_N;
-                  hit = 1'b1;
-                  disable pass;
+                begin // hit from l
+                  x_delta_next <= BALL_V_N;
+                  hit <= 1'b1;
+                  bricks_destroyed[j] <= 1;
                 end
                 else if ((REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH>=ball_x_l) && // r>bl
                      (ball_x_l>=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) && // bl>l
                      (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
                      (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bt<b
-                begin // if ball in brick region
-                  x_delta_next = BALL_V_P;
-                  hit = 1'b1;
-                  disable pass;
+                begin // hit from r
+                  x_delta_next <= BALL_V_P;
+                  hit <= 1'b1;
+                  bricks_destroyed[j] <= 1;
                 end
                 else if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
                      (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // bl<r
                      (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
                      (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bb<b
-                begin // if ball in brick region
-                  y_delta_next = BALL_V_N;
-                  hit = 1'b1;
-                  disable pass;
+                begin // hit from t
+                  y_delta_next <= BALL_V_N;
+                  hit <= 1'b1;
+                  bricks_destroyed[j] <= 1;
                 end
                 else if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
                      (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // bl<r
                      (REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT>=ball_y_t) && // b>bt
                      (ball_y_t>=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT)) // bt>t
-                begin // if ball in brick region
-                  y_delta_next = BALL_V_P;
-                  hit = 1'b1;
-                  disable pass;
+                begin // hit from b
+                  y_delta_next <= BALL_V_P;
+                  hit <= 1'b1;
+                  bricks_destroyed[j] <= 1;
                 end
              end
          end
+//         for (j = 0; j < NUM_BRICKS; j = j + 1)
+//         begin // for every brick
+//            if (~bricks_destroyed[j] &&
+//                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && 
+//                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) &&
+//                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && 
+//                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // ball in collision region
+//            begin // if ball in brick region
+//                 bricks_destroyed[j] = 1;
+//               if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_l) && 
+//                 (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH))
+//               begin // if ball hits t or b
+//                  if (ball_y_t<=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT) // hits t
+//                     y_delta_next = BALL_V_N; // bounce back
+//                  else // hits b
+//                     y_delta_next = BALL_V_P; // bounce back
+//                  bricks_destroyed[j] = 1;
+//                  hit = 1'b1;
+//               end
+//               else if ((REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_t) && 
+//                 (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
+//               begin // if ball hits l or r
+//                  if (ball_x_l<=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) // hits l
+//                     x_delta_next = BALL_V_N; // bounce back
+//                  else // hits r
+//                     x_delta_next = BALL_V_P; // bounce back
+//                  bricks_destroyed[j] = 1;
+//                  hit = 1'b1;
+//               end
+//            end
+//         end
       end
    end 
 
