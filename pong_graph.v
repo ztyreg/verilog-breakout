@@ -255,20 +255,20 @@ module pong_graph
                if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_l) && 
                  (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH))
                begin // if ball hits t or b
-                  if (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT) // hits t
-                     y_delta_next = BALL_V_N; // bounce back
-                  else // hits b
-                     y_delta_next = BALL_V_P; // bounce back
+//                  if (ball_y_t>=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT) // hits t
+//                     y_delta_next = BALL_V_N; // bounce back
+//                  else // hits b
+//                     y_delta_next = BALL_V_P; // bounce back
                   bricks_destroyed[j] = 1;
                   hit = 1'b1;
                end
                else if ((REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_t) && 
                  (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
                begin // if ball hits l or r
-                  if (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) // hits l
-                     x_delta_next = BALL_V_N; // bounce back
-                  else // hits r
-                     x_delta_next = BALL_V_P; // bounce back
+//                  if (ball_x_l<=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) // hits l
+//                     x_delta_next = BALL_V_N; // bounce back
+//                  else // hits r
+//                     x_delta_next = BALL_V_P; // bounce back
                   bricks_destroyed[j] = 1;
                   hit = 1'b1;
                end
