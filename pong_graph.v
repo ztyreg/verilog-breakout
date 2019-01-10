@@ -226,7 +226,7 @@ module pong_graph
       else if (ball_y_b > (MAX_Y-1)) // reach bottom
 //         y_delta_next = (y_delta_next == BALL_V_P) ? BALL_V_N : BALL_V_P;
          y_delta_next = BALL_V_N;
-      else if (ball_x_l <= 0) // reach wall
+      else if (ball_x_l < 1) // reach left
 //         x_delta_next = (x_delta_next == BALL_V_P) ? BALL_V_N : BALL_V_P;    // bounce back
          x_delta_next = BALL_V_P;
       else if ((BAR_X_L<=ball_x_r) && (ball_x_r<=BAR_X_R) &&
@@ -237,7 +237,7 @@ module pong_graph
             x_delta_next = BALL_V_N;
             hit = 1'b1;
          end
-      else if (ball_x_r>MAX_X)   // reach right border
+      else if (ball_x_r>(MAX_X-1))   // reach right border
 //         miss = 1'b1;            // a miss       
 //         x_delta_next = (x_delta_next == BALL_V_P) ? BALL_V_N : BALL_V_P;
          x_delta_next = BALL_V_N;
@@ -256,9 +256,11 @@ module pong_graph
                  (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH))
                begin // if ball hits t or b
 //                  if (ball_y_t>=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT) // hits t
-//                     y_delta_next = BALL_V_N; // bounce back
+//                     y_delta_next = 0; // bounce back
 //                  else // hits b
-//                     y_delta_next = BALL_V_P; // bounce back
+//                     y_delta_next = 0; // bounce back
+//                  y_delta_next = (y_delta_reg == BALL_V_P) ? BALL_V_N : BALL_V_P;
+                  y_delta_next = 0;
                   bricks_destroyed[j] = 1;
                   hit = 1'b1;
                end
@@ -266,9 +268,11 @@ module pong_graph
                  (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
                begin // if ball hits l or r
 //                  if (ball_x_l<=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) // hits l
-//                     x_delta_next = BALL_V_N; // bounce back
+//                     x_delta_next = 0; // bounce back
 //                  else // hits r
-//                     x_delta_next = BALL_V_P; // bounce back
+//                     x_delta_next = 0; // bounce back
+//                  x_delta_next = (x_delta_reg == BALL_V_P) ? BALL_V_N : BALL_V_P;
+                  x_delta_next = 0;
                   bricks_destroyed[j] = 1;
                   hit = 1'b1;
                end
