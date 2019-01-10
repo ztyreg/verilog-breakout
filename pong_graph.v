@@ -247,10 +247,10 @@ module pong_graph
          for (j = 0; j < NUM_BRICKS; j = j + 1)
          begin: pass // for every brick
             if (~bricks_destroyed[j] &&
-                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r+4) && 
-                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH+4) &&
-                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b+4) && 
-                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT+4))
+                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && 
+                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) &&
+                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && 
+                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
             begin
                 bricks_destroyed[j] = 1;
                 if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br

@@ -77,11 +77,11 @@ module Top(
  	wire [9:0] row_addr;
 	wire [19:0] x_sqr, y_sqr, r_sqr;
 	
-	vgac v0 (
-		.vga_clk(clkdiv[1]), .clrn(SW_OK[15]), .d_in(rgb_reg), 
-		.row_addr(row_addr), .col_addr(col_addr), 
-		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
-	);
+//	vgac v0 (
+//		.vga_clk(clkdiv[1]), .clrn(SW_OK[15]), .d_in(rgb_reg), 
+//		.row_addr(row_addr), .col_addr(col_addr), 
+//		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
+//	);
 	reg wasReady;
 //	reg [9:0] radius = 10'd15;
 //	always @(posedge clk) begin
@@ -186,7 +186,25 @@ module Top(
 //			vga_data <= SW[12:1];
 //		else vga_data <= 12'hfff;
 //	end
+    wire [18:0] d;
+    wire [11:0] ip_out;
+    
+    vgaIP ip1(.clock(clk),
+        .rst(!rstn),
+        .disp_RGB(ip_out),
+        .disp_b(b),
+        .disp_g(g),
+        .disp_r(r),
+        .h_addr(col_addr),
+        .v_addr(row_addr),    
+        .hsync(hs),
+        .vsync(vs)
+    );
+    
+    
+    blk_mem_gen_0(.clka(clk), .addra(d), .douta(ip_out));
 
+    assign d = row_addr * 640 + col_addr;
 
 	assign segTestData = {7'b0,x,8'b0,y};
 	wire [15:0] ledData;
