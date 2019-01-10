@@ -18,17 +18,17 @@ module pong_graph
    //--------------------------------------------
    // bricks
    //--------------------------------------------
-   localparam NUM_BRICKS = 48; // 6*8
-   localparam ROW_BRICKS = 6;
-   localparam COL_BRICKS = 8;
+   localparam NUM_BRICKS = 6; // 6*8
+   localparam ROW_BRICKS = 1;
+   localparam COL_BRICKS = 6;
    localparam BRICK_HEIGHT = 70; // 6*70+60=480
    localparam BRICK_WIDTH = 35; // 35*8=280
    // bricks region boundary
    localparam REGION_X_L = 40;
    localparam REGION_X_R = 320;
    localparam REGION_Y_T = 30;
-   localparam REGION_Y_B = 450;
-   reg [47:0] bricks_destroyed = 48'b0;
+   localparam REGION_Y_B = 100;
+   reg [47:0] bricks_destroyed = 6'b0;
    //--------------------------------------------
    // vertical strip as a wall
    //--------------------------------------------
@@ -84,7 +84,7 @@ module pong_graph
    //--------------------------------------------
    // i for loop
    genvar i; 
-   integer j;
+   integer j, col, row, top, bottom, left, right;
    // number of bricks left
    integer bricks_count = 48;
   
@@ -145,7 +145,7 @@ module pong_graph
    // the 4 statements are in order: the lborder, rborder, tborder, bborder (of brick[i])
    for (i = 0; i < NUM_BRICKS; i = i + 1) 
    begin
-      assign brick_on_sub[i] =  (~bricks_destroyed[i] &&
+      assign brick_on_sub[i] =  (!bricks_destroyed[i] &&
                                 (REGION_X_L+(i%COL_BRICKS)*BRICK_WIDTH<=pix_x) && 
                                 (pix_x<=REGION_X_L+(i%COL_BRICKS+1)*BRICK_WIDTH) &&
                                 (REGION_Y_T+(i/COL_BRICKS)*BRICK_HEIGHT<=pix_y) && 
@@ -243,50 +243,60 @@ module pong_graph
       else 
 //      if (REGION_X_L<=ball_x_r && ball_x_l<=REGION_X_R &&
 //               REGION_Y_T<=ball_y_b && ball_y_t<=REGION_Y_B)
-      begin
+      begin: loop
          for (j = 0; j < NUM_BRICKS; j = j + 1)
          begin: pass // for every brick
-            if (~bricks_destroyed[j] &&
-                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && 
-                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) &&
-                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && 
-                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
+            col = j % COL_BRICKS;
+            row = j / ROW_BRICKS;
+            top = REGION_Y_T+(row)*BRICK_HEIGHT;
+            bottom = REGION_Y_T+(row+1)*BRICK_HEIGHT;
+            left = REGION_X_L+col*BRICK_WIDTH;
+            right = REGION_X_L+(col+1)*BRICK_WIDTH;
+            if (!bricks_destroyed[j] &&
+                 (left <= ball_x_r) && 
+                 (ball_x_l <= right) &&
+                 (top <=ball_y_b) && 
+                 (ball_y_t<= bottom))
             begin
-                if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
-                     (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // br<r
-                     (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
-                     (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bt<b
+                if ((left<=ball_x_r) && // l<br
+                     (ball_x_r<=right) && // br<r
+                     (top<=ball_y_b) && // t<bb
+                     (ball_y_t<=bottom)) // bt<b
                 begin // hit from l
                   x_delta_next <= BALL_V_N;
                   hit <= 1'b1;
                   bricks_destroyed[j] <= 1;
+                  disable loop;
                 end
-                else if ((REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH>=ball_x_l) && // r>bl
-                     (ball_x_l>=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) && // bl>l
-                     (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
-                     (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bt<b
+                else if ((right>=ball_x_l) && // r>bl
+                     (ball_x_l>=left) && // bl>l
+                     (top<=ball_y_b) && // t<bb
+                     (ball_y_t<=bottom)) // bt<b
                 begin // hit from r
                   x_delta_next <= BALL_V_P;
                   hit <= 1'b1;
                   bricks_destroyed[j] <= 1;
+                  disable loop;
                 end
-                else if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
-                     (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // bl<r
-                     (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
-                     (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bb<b
+                else if ((left<=ball_x_r) && // l<br
+                     (ball_x_l<=right) && // bl<r
+                     (top<=ball_y_b) && // t<bb
+                     (ball_y_b<=bottom)) // bb<b
                 begin // hit from t
                   y_delta_next <= BALL_V_N;
                   hit <= 1'b1;
                   bricks_destroyed[j] <= 1;
+                  disable loop;
                 end
-                else if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
-                     (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // bl<r
-                     (REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT>=ball_y_t) && // b>bt
-                     (ball_y_t>=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT)) // bt>t
+                else if ((left<=ball_x_r) && // l<br
+                     (ball_x_l<=right) && // bl<r
+                     (bottom>=ball_y_t) && // b>bt
+                     (ball_y_t>=top)) // bt>t
                 begin // hit from b
                   y_delta_next <= BALL_V_P;
                   hit <= 1'b1;
                   bricks_destroyed[j] <= 1;
+                  disable loop;
                 end
              end
          end

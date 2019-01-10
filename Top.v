@@ -208,7 +208,7 @@ module Top(
 //    );
     
     
-    blk_mem_gen_0(.clka(clk), .addra(d), .douta(ip_out));
+    blk_mem_gen_0(.clka(clkdiv[2]), .addra(d), .douta(ip_out));
 
     assign d = row_addr * 640 + col_addr;
 
