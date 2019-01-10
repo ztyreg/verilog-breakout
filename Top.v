@@ -132,7 +132,7 @@ module Top(
     pong_graph graph_unit
         (.clk(clk), .reset(!rstn), .btn(keyCode),
         .pix_x(col_addr), .pix_y(row_addr),
-        .gra_still(gra_still), .hit(hit), .miss(miss),
+        .gra_still(SW[0]), .hit(hit), .miss(miss),
         .graph_on(graph_on), .graph_rgb(graph_rgb));
 	
 
