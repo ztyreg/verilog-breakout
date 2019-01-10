@@ -235,48 +235,61 @@ module pong_graph
             // reach x of right bar and hit, ball bounce back
 //            x_delta_next = (x_delta_next == BALL_V_P) ? BALL_V_N : BALL_V_P;
             x_delta_next = BALL_V_N;
-            hit = 1'b1;
          end
       else if (ball_x_r>(MAX_X-1))   // reach right border
 //         miss = 1'b1;            // a miss       
 //         x_delta_next = (x_delta_next == BALL_V_P) ? BALL_V_N : BALL_V_P;
          x_delta_next = BALL_V_N;
-      else if (REGION_X_L<=ball_x_r && ball_x_l<=REGION_X_R &&
-               REGION_Y_T<=ball_y_b && ball_y_t<=REGION_Y_B)
+      else 
+//      if (REGION_X_L<=ball_x_r && ball_x_l<=REGION_X_R &&
+//               REGION_Y_T<=ball_y_b && ball_y_t<=REGION_Y_B)
       begin
          for (j = 0; j < NUM_BRICKS; j = j + 1)
-         begin // for every brick
+         begin: pass // for every brick
             if (~bricks_destroyed[j] &&
-                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && 
-                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) &&
-                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && 
-                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // ball in collision region
-            begin // if ball in brick region
-               if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_l) && 
-                 (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH))
-               begin // if ball hits t or b
-//                  if (ball_y_t>=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT) // hits t
-//                     y_delta_next = 0; // bounce back
-//                  else // hits b
-//                     y_delta_next = 0; // bounce back
-//                  y_delta_next = (y_delta_reg == BALL_V_P) ? BALL_V_N : BALL_V_P;
-                  y_delta_next = 0;
-                  bricks_destroyed[j] = 1;
+                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r+4) && 
+                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH+4) &&
+                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b+4) && 
+                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT+4))
+            begin
+                bricks_destroyed[j] = 1;
+                if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
+                     (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // br<r
+                     (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
+                     (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bt<b
+                begin // if ball in brick region
+                  x_delta_next = BALL_V_N;
                   hit = 1'b1;
-               end
-               else if ((REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_t) && 
-                 (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
-               begin // if ball hits l or r
-//                  if (ball_x_l<=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) // hits l
-//                     x_delta_next = 0; // bounce back
-//                  else // hits r
-//                     x_delta_next = 0; // bounce back
-//                  x_delta_next = (x_delta_reg == BALL_V_P) ? BALL_V_N : BALL_V_P;
-                  x_delta_next = 0;
-                  bricks_destroyed[j] = 1;
+                  disable pass;
+                end
+                else if ((REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH>=ball_x_l) && // r>bl
+                     (ball_x_l>=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) && // bl>l
+                     (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
+                     (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bt<b
+                begin // if ball in brick region
+                  x_delta_next = BALL_V_P;
                   hit = 1'b1;
-               end
-            end
+                  disable pass;
+                end
+                else if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
+                     (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // bl<r
+                     (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && // t<bb
+                     (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // bb<b
+                begin // if ball in brick region
+                  y_delta_next = BALL_V_N;
+                  hit = 1'b1;
+                  disable pass;
+                end
+                else if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && // l<br
+                     (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) && // bl<r
+                     (REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT>=ball_y_t) && // b>bt
+                     (ball_y_t>=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT)) // bt>t
+                begin // if ball in brick region
+                  y_delta_next = BALL_V_P;
+                  hit = 1'b1;
+                  disable pass;
+                end
+             end
          end
       end
    end 
@@ -296,4 +309,32 @@ module pong_graph
    // new graphic_on signal
    assign graph_on = brick_on | bar_on | rd_ball_on;
 
-endmodule 
+endmodule
+
+//module get_brick_margin();
+//   localparam NUM_BRICKS = 48; // 6*8
+//   localparam ROW_BRICKS = 6;
+//   localparam COL_BRICKS = 8;
+//   localparam BRICK_HEIGHT = 70; // 6*70+60=480
+//   localparam BRICK_WIDTH = 35; // 35*8=280
+//   // bricks region boundary
+//   localparam REGION_X_L = 40;
+//   localparam REGION_X_R = 320;
+//   localparam REGION_Y_T = 30;
+//   localparam REGION_Y_B = 450;
+    
+//    task get;
+//        input [9:0] i, dir;
+//        output [9:0] margin;
+//        begin
+//          case (dir)
+//              3'h0: margin = REGION_X_L+(i%COL_BRICKS)*BRICK_WIDTH;
+//              3'h1: margin = REGION_X_L+(i%COL_BRICKS+1)*BRICK_WIDTH;
+//              3'h2: margin = REGION_Y_T+(i/COL_BRICKS)*BRICK_HEIGHT;
+//              3'h3: margin = REGION_Y_T+(i/COL_BRICKS+1)*BRICK_HEIGHT;
+              
+//          endcase
+//        end 
+//    endtask
+//endmodule
+
