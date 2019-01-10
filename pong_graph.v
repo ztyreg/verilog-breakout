@@ -18,8 +18,8 @@ module pong_graph
    //--------------------------------------------
    // bricks
    //--------------------------------------------
-   localparam NUM_BRICKS = 6; // 6*8
-   localparam ROW_BRICKS = 1;
+   localparam NUM_BRICKS = 48; // 6*8
+   localparam ROW_BRICKS = 8;
    localparam COL_BRICKS = 6;
    localparam BRICK_HEIGHT = 70; // 6*70+60=480
    localparam BRICK_WIDTH = 35; // 35*8=280
@@ -27,14 +27,8 @@ module pong_graph
    localparam REGION_X_L = 40;
    localparam REGION_X_R = 320;
    localparam REGION_Y_T = 30;
-   localparam REGION_Y_B = 100;
-   reg [47:0] bricks_destroyed = 6'b0;
-   //--------------------------------------------
-   // vertical strip as a wall
-   //--------------------------------------------
-   // wall left, right boundary
-   localparam WALL_X_L = 32;
-   localparam WALL_X_R = 35;
+   localparam REGION_Y_B = 450;
+   reg [47:0] bricks_destroyed = 48'b0;
    //--------------------------------------------
    // right vertical bar
    //--------------------------------------------
@@ -128,14 +122,6 @@ module pong_graph
    assign refr_tick = (pix_y==481) && (pix_x==0);
    
    //--------------------------------------------
-   // (wall) left vertical strip
-   //--------------------------------------------
-   // pixel within wall
-   assign wall_on = (WALL_X_L<=pix_x) && (pix_x<=WALL_X_R);
-   // wall rgb output
-   assign wall_rgb = 12'h00f; // red
-   
-   //--------------------------------------------
    // brick (region)
    //--------------------------------------------
    // pixel within region
@@ -207,6 +193,12 @@ module pong_graph
    assign ball_y_next = (gra_still) ? MAX_Y/2 :
                         (refr_tick) ? ball_y_reg+y_delta_reg :
                         ball_y_reg ;
+                        
+                        
+   
+                        
+                        
+                        
    // new ball velocity
    always @*   
    begin
@@ -350,31 +342,4 @@ module pong_graph
    assign graph_on = brick_on | bar_on | rd_ball_on;
 
 endmodule
-
-//module get_brick_margin();
-//   localparam NUM_BRICKS = 48; // 6*8
-//   localparam ROW_BRICKS = 6;
-//   localparam COL_BRICKS = 8;
-//   localparam BRICK_HEIGHT = 70; // 6*70+60=480
-//   localparam BRICK_WIDTH = 35; // 35*8=280
-//   // bricks region boundary
-//   localparam REGION_X_L = 40;
-//   localparam REGION_X_R = 320;
-//   localparam REGION_Y_T = 30;
-//   localparam REGION_Y_B = 450;
-    
-//    task get;
-//        input [9:0] i, dir;
-//        output [9:0] margin;
-//        begin
-//          case (dir)
-//              3'h0: margin = REGION_X_L+(i%COL_BRICKS)*BRICK_WIDTH;
-//              3'h1: margin = REGION_X_L+(i%COL_BRICKS+1)*BRICK_WIDTH;
-//              3'h2: margin = REGION_Y_T+(i/COL_BRICKS)*BRICK_HEIGHT;
-//              3'h3: margin = REGION_Y_T+(i/COL_BRICKS+1)*BRICK_HEIGHT;
-              
-//          endcase
-//        end 
-//    endtask
-//endmodule
 
