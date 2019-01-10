@@ -16,6 +16,20 @@ module pong_graph
    localparam MAX_Y = 480;
    wire refr_tick;
    //--------------------------------------------
+   // bricks
+   //--------------------------------------------
+   localparam NUM_BRICKS = 48; // 6*8
+   localparam ROW_BRICKS = 6;
+   localparam COL_BRICKS = 8;
+   localparam BRICK_HEIGHT = 70; // 6*70+60=480
+   localparam BRICK_WIDTH = 35; // 35*8=280
+   // bricks region boundary
+   localparam REGION_X_L = 40;
+   localparam REGION_X_R = 320;
+   localparam REGION_Y_T = 30;
+   localparam REGION_Y_B = 450;
+   reg [47:0] bricks_destroyed = 48'b0;
+   //--------------------------------------------
    // vertical strip as a wall
    //--------------------------------------------
    // wall left, right boundary
@@ -49,8 +63,8 @@ module pong_graph
    reg [9:0] x_delta_reg, x_delta_next;
    reg [9:0] y_delta_reg, y_delta_next;
    // ball velocity can be pos or neg)
-   localparam BALL_V_P = 2;
-   localparam BALL_V_N = -2;
+   localparam BALL_V_P = 1;
+   localparam BALL_V_N = -1;
    //--------------------------------------------
    // round ball 
    //--------------------------------------------
@@ -61,7 +75,18 @@ module pong_graph
    // object output signals
    //--------------------------------------------
    wire wall_on, bar_on, sq_ball_on, rd_ball_on;
+   wire brick_on;
+   wire [47:0] brick_on_sub;
+   wire [11:0] brick_rgb;
    wire [11:0] wall_rgb, bar_rgb, ball_rgb;
+   //--------------------------------------------
+   // iterators and counts
+   //--------------------------------------------
+   // i for loop
+   genvar i; 
+   integer j;
+   // number of bricks left
+   integer bricks_count = 48;
   
    // body 
    //--------------------------------------------
@@ -108,7 +133,27 @@ module pong_graph
    // pixel within wall
    assign wall_on = (WALL_X_L<=pix_x) && (pix_x<=WALL_X_R);
    // wall rgb output
-   assign wall_rgb = 12'h00f; // blue
+   assign wall_rgb = 12'h00f; // red
+   
+   //--------------------------------------------
+   // brick (region)
+   //--------------------------------------------
+   // pixel within region
+//   assign brick_on = (REGION_X_L<=pix_x) && (pix_x<=REGION_X_R) &&
+//                      (REGION_Y_T<=pix_y) && (pix_y<=REGION_Y_B);
+   // bricks 12345678\n910111213141516\n17...
+   // the 4 statements are in order: the lborder, rborder, tborder, bborder (of brick[i])
+   for (i = 0; i < NUM_BRICKS; i = i + 1) 
+   begin
+      assign brick_on_sub[i] =  (~bricks_destroyed[i] &&
+                                (REGION_X_L+(i%COL_BRICKS)*BRICK_WIDTH<=pix_x) && 
+                                (pix_x<=REGION_X_L+(i%COL_BRICKS+1)*BRICK_WIDTH) &&
+                                (REGION_Y_T+(i/COL_BRICKS)*BRICK_HEIGHT<=pix_y) && 
+                                (pix_y<=REGION_Y_T+(i/COL_BRICKS+1)*BRICK_HEIGHT));
+   end
+   assign brick_on = |brick_on_sub; // in any on brick region
+   // brick rgb output
+   assign brick_rgb = 12'h00f; // red
 
    //--------------------------------------------
    // right vertical bar
@@ -188,22 +233,57 @@ module pong_graph
             hit = 1'b1;
          end
       else if (ball_x_r>MAX_X)   // reach right border
-         miss = 1'b1;            // a miss       
+//         miss = 1'b1;            // a miss       
+         x_delta_next = BALL_V_N;
+      else if (REGION_X_L<=ball_x_r && ball_x_l<=REGION_X_R &&
+               REGION_Y_T<=ball_y_b && ball_y_t<=REGION_Y_B)
+      begin
+         for (j = 0; j < NUM_BRICKS; j = j + 1)
+         begin // for every brick
+            if (~bricks_destroyed[j] &&
+                 (REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_r) && 
+                 (ball_x_l<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH) &&
+                 (REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_b) && 
+                 (ball_y_t<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT)) // ball in collision region
+            begin // if ball in brick region
+               if ((REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH<=ball_x_l) && 
+                 (ball_x_r<=REGION_X_L+(j%COL_BRICKS+1)*BRICK_WIDTH))
+               begin // if ball hits t or b
+                  if (ball_y_t<=REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT) // hits t
+                     y_delta_next = BALL_V_N; // bounce back
+                  else // hits b
+                     y_delta_next = BALL_V_P; // bounce back
+                  bricks_destroyed[j] = 1;
+                  hit = 1'b1;
+               end
+               else if ((REGION_Y_T+(j/COL_BRICKS)*BRICK_HEIGHT<=ball_y_t) && 
+                 (ball_y_b<=REGION_Y_T+(j/COL_BRICKS+1)*BRICK_HEIGHT))
+               begin // if ball hits l or r
+                  if (ball_x_l<=REGION_X_L+(j%COL_BRICKS)*BRICK_WIDTH) // hits l
+                     x_delta_next = BALL_V_N; // bounce back
+                  else // hits r
+                     x_delta_next = BALL_V_P; // bounce back
+                  bricks_destroyed[j] = 1;
+                  hit = 1'b1;
+               end
+            end
+         end
+      end
    end 
 
    //--------------------------------------------
    // rgb multiplexing circuit
    //--------------------------------------------
    always @* 
-      if (wall_on)
-         graph_rgb = wall_rgb;
+      if (brick_on)
+         graph_rgb = brick_rgb;
       else if (bar_on)
          graph_rgb = bar_rgb;
       else if (rd_ball_on)
            graph_rgb = ball_rgb;
       else
-            graph_rgb = 12'hff0; // yellow background
+            graph_rgb = 12'hff0; // cyan background
    // new graphic_on signal
-   assign graph_on = wall_on | bar_on | rd_ball_on;
+   assign graph_on = brick_on | bar_on | rd_ball_on;
 
 endmodule 
