@@ -30,7 +30,6 @@ module pong_graph
    localparam REGION_Y_B = 450;//
    reg [47:0] bricks_destroyed = 48'b0;//*
    reg [47:0] bricks_destroyed_next = 48'b0;//*
-   reg hit_next;
    //--------------------------------------------
    // right vertical bar
    //--------------------------------------------
@@ -144,7 +143,6 @@ module pong_graph
             bar_y_reg <= 0;
             ball_x_reg <= 0;
             ball_y_reg <= 0;
-            hit <= 0;
             x_delta_reg <= 10'h004;
             y_delta_reg <= 10'h004;
          end   
@@ -156,7 +154,6 @@ module pong_graph
             x_delta_reg <= x_delta_next;
             y_delta_reg <= y_delta_next;
             bricks_destroyed <= bricks_destroyed_next;
-            hit <= hit_next;
          end   
 
    // refr_tick: 1-clock tick asserted at start of v-sync
@@ -273,7 +270,7 @@ module pong_graph
    //--------------------------------------------
    always @*   
    begin
-      hit_next = hit;
+      hit = 1'b0;
       miss = 1'b0;
       x_delta_next = x_delta_reg;
       y_delta_next = y_delta_reg;
@@ -294,7 +291,7 @@ module pong_graph
                (bar_y_t<=ball_y_b) && (ball_y_t<=bar_y_b))
          x_delta_next = BALL_V_N;
       else if (ball_x_r>(MAX_X-1))   // reach right border
-         x_delta_next = BALL_V_N;
+         miss = 1'b1;
       else 
       
       begin: loop
@@ -319,7 +316,7 @@ module pong_graph
                   else // hits b
                      y_delta_next = BALL_V_P; // bounce back
 //                  y_delta_next <= BALL_V_P;
-                  hit_next = 1'b1;
+                  hit = 1'b1;
                   bricks_destroyed_next[j] = 1;
                end
                else if ((top < ball_y_b) && (ball_y_t < bottom)) begin // if ball hits l or r
@@ -329,7 +326,7 @@ module pong_graph
                      x_delta_next = BALL_V_P; // bounce back
 //                  x_delta_next <= BALL_V_P;
 //                  bricks_destroyed[j] <= 1;
-                  hit_next = 1'b1;
+                  hit = 1'b1;
                   bricks_destroyed_next[j] = 1;
                end
             end

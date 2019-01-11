@@ -138,19 +138,75 @@ module Top(
    //=======================================================
    // finite state machine
    //=======================================================
+   reg d_inc, d_clr;
+   reg timer_start;
+   wire timer_up;
+   wire timer_tick = (col_addr==0) && (row_addr==0);
+   
+   timer timer_unit
+      (.clk(clk), .reset(!rstn), .timer_tick(timer_tick),
+       .timer_start(timer_start), .timer_up(timer_up));
+       
+   m100_counter counter_unit
+      (.clk(clk), .reset(!rstn), .d_inc(d_inc), .d_clr(d_clr),
+       .dig0(dig0), .dig1(dig1));
+
 	always @(posedge clk, negedge rstn)
-       if (!rstn) begin
-         state_reg <= newgame;
+       if (!rstn | !SW[0]) begin
+         state_reg <= play;
          ball_reg <= 0;
          rgb_reg <= 12'h000;
+         d_clr = 1'b1;
       end
        else begin
          state_reg <= state_next;
          ball_reg <= ball_next;
 //            if (pixel_tick)
          rgb_reg <= rgb_next;
+         d_clr = 1'b0;
        end
-	
+    
+       always @* begin
+//      timer_start = 1'b0;
+      d_inc = 1'b0;
+      d_clr = 1'b0;
+      state_next = state_reg;
+      ball_next = ball_reg;
+      case (state_reg)
+//         newgame: begin
+//               ball_next = 2'b11; // three balls
+//               d_clr = 1'b1;      // clear score
+////               if (btn != 2'b00)  // button pressed
+////                  begin
+//                     state_next = play;
+////                     ball_next = ball_reg - 1;
+////                  end
+//         end
+         play: begin
+           if (hit)
+              d_inc = 1'b1;   // increment score
+           else if (miss) begin
+//                     if (ball_reg==0)
+                    state_next = over;
+//                     else
+//                        state_next = newball;
+                 timer_start = 1'b1;  // 2 sec timer
+//                 ball_next = ball_reg - 1;
+            end
+          end
+         newball:
+            // wait for 2 sec and until button pressed
+            if (timer_up)
+                state_next = play;
+         over:
+            // wait for 2 sec to display game over
+            if (timer_up)
+                state_next = newgame;
+       endcase
+    end
+   //=======================================================
+   // rgb multiplexing circuit
+   //=======================================================
     always @*
       if (~video_on)
          rgb_next = "000"; // blank the edge/retrace
@@ -171,29 +227,29 @@ module Top(
 
     wire [18:0] blk_mem_0_d;
 
-    //blk_mem_gen_0 v0(.clka(clkdiv), .addra(blk_mem_0_d), .douta(ip_out));
+    blk_mem_gen_0 blk0(.clka(clkdiv), .addra(blk_mem_0_d), .douta(ip_out));
 
     assign blk_mem_0_d = row_addr * 640 + col_addr;
     
-     reg [7:0] counter;
-     initial begin
-        counter = 8'd0;
-     end
-     always @(posedge clk) begin
-         if (hit) begin
-           if(counter[3:0] < 4'd9)
-                counter[3:0] <= counter[3:0] + 4'd1;
-            else if(counter[3:0] == 4'd9)begin
-                counter[3:0] <= 4'd0;
-                if(counter[7:4] < 4'd9)
-                    counter[7:4] <= counter[7:4] + 4'd1;
-                else
-                    counter[7:4] <= 4'd0;
-            end
-        end
-     end
+//     reg [7:0] counter;
+//     initial begin
+//        counter = 8'd0;
+//     end
+//     always @(posedge clk) begin
+//         if (hit) begin
+//           if(counter[3:0] < 4'd9)
+//                counter[3:0] <= counter[3:0] + 4'd1;
+//            else if(counter[3:0] == 4'd9)begin
+//                counter[3:0] <= 4'd0;
+//                if(counter[7:4] < 4'd9)
+//                    counter[7:4] <= counter[7:4] + 4'd1;
+//                else
+//                    counter[7:4] <= 4'd0;
+//            end
+//        end
+//     end
 
-	assign segTestData = {24'd0, counter};
+	assign segTestData = {24'd0, dig1, dig0};
 	wire [15:0] ledData;
 	assign ledData = SW_OK;
 	
