@@ -179,15 +179,17 @@ module Top(
      initial begin
         counter = 8'd0;
      end
-     always @(hit) begin
-       if(counter[3:0] < 4'd9)
-            counter[3:0] <= counter[3:0] + 4'd1;
-        else if(counter[3:0] == 4'd9)begin
-            counter[3:0] <= 4'd0;
-            if(counter[7:4] < 4'd9)
-                counter[7:4] <= counter[7:4] + 4'd1;
-            else
-                counter[7:4] <= 4'd0;
+     always @(posedge clk) begin
+         if (hit) begin
+           if(counter[3:0] < 4'd9)
+                counter[3:0] <= counter[3:0] + 4'd1;
+            else if(counter[3:0] == 4'd9)begin
+                counter[3:0] <= 4'd0;
+                if(counter[7:4] < 4'd9)
+                    counter[7:4] <= counter[7:4] + 4'd1;
+                else
+                    counter[7:4] <= 4'd0;
+            end
         end
      end
 

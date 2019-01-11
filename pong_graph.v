@@ -92,7 +92,7 @@ module pong_graph
    wire [11:0] brick_rgb[47:0];
    wire [11:0] ai_rgb;
    wire [11:0] wall_rgb, bar_rgb, ball_rgb;
-	wire [35:0] brick_color = 36'h00f_0f0_f00;
+	wire [35:0] brick_color = 36'hff0_f0f_0ff;
    //--------------------------------------------
    // iterators and counts
    //--------------------------------------------
@@ -168,8 +168,7 @@ module pong_graph
    //--------------------------------------------
    // pixel within region
 	
-   wire [9:0] current_brick_top,current_brick_left;
-   assign brick_addr = pix_y - ((pix_y - REGION_Y_T) % BRICK_HEIGHT) * BRICK_HEIGHT; 
+   assign brick_addr = pix_y - (((pix_y - REGION_Y_T) / BRICK_HEIGHT) * BRICK_HEIGHT + REGION_Y_T); 
 	
    for (i = 0; i < NUM_BRICKS; i = i + 1) 
    begin
@@ -274,7 +273,7 @@ module pong_graph
    //--------------------------------------------
    always @*   
    begin
-      hit = 1'b0;
+      hit_next = hit;
       miss = 1'b0;
       x_delta_next = x_delta_reg;
       y_delta_next = y_delta_reg;
