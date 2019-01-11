@@ -77,6 +77,8 @@ module pong_graph
    // round ball 
    //--------------------------------------------
    wire [2:0] rom_addr, rom_col;
+	wire [6:0] brick_addr;
+	reg [34:0] brick_data;
    reg [7:0] rom_data;
    wire rom_bit;
    //--------------------------------------------
@@ -86,9 +88,10 @@ module pong_graph
    wire brick_on;
    wire ai_on;
    wire [47:0] brick_on_sub;
-   wire [11:0] brick_rgb;
+   wire [11:0] brick_rgb[47:0];
    wire [11:0] ai_rgb;
    wire [11:0] wall_rgb, bar_rgb, ball_rgb;
+	wire [35:0] brick_color = 36'h00f_0f0_f00;
    //--------------------------------------------
    // iterators and counts
    //--------------------------------------------
@@ -113,7 +116,26 @@ module pong_graph
       3'h6: rom_data = 8'b01111110; //  ******
       3'h7: rom_data = 8'b00111100; //   ****
    endcase
-   
+	
+   always @*
+   if(brick_addr == 7'd0 || brick_addr == 7'd69)
+		brick_data = 35'b00000000000000011111000000000000000; //   ****
+	else if(brick_addr == 7'd1 || brick_addr == 7'd68)
+      brick_data = 35'b00000000000001111111110000000000000; //  ******
+	else if(brick_addr == 7'd2 || brick_addr == 7'd67)
+       brick_data = 35'b00000000000111111111111100000000000; // ********
+	else if(brick_addr == 7'd3 || brick_addr == 7'd66)
+      brick_data = 35'b00000000011111111111111111000000000; // ********
+	else if(brick_addr == 7'd4 || brick_addr == 7'd65)
+      brick_data = 35'b00000001111111111111111111110000000; // ********
+	else if(brick_addr == 7'd5 || brick_addr == 7'd64)
+      brick_data = 35'b00001111111111111111111111111110000; // ********
+	else if(brick_addr == 7'd6 || brick_addr == 7'd63)
+		brick_data = 35'b00111111111111111111111111111111100; // ********
+	else if(brick_addr >= 7'd7 && brick_addr <= 7'd62)
+		brick_data = 35'b01111111111111111111111111111111110; // ********
+
+
    // registers
    always @(posedge clk, posedge reset)
       if (reset)
@@ -142,17 +164,24 @@ module pong_graph
    // brick (region)
    //--------------------------------------------
    // pixel within region
+   wire [9:0] current_brick_top,current_brick_left;
+   assign current_brick_top = ((pix_y - REGION_Y_T) % BRICK_HEIGHT) * BRICK_HEIGHT;
+   assign brick_addr = pix_y - current_brick_top; 
+	
    for (i = 0; i < NUM_BRICKS; i = i + 1) 
    begin
-      assign brick_on_sub[i] =  (!bricks_destroyed[i] &&
+      assign current_brick_left = REGION_X_L+(i%COL_BRICKS)*BRICK_WIDTH;
+      assign brick_on_sub[i] =  (!bricks_destroyed[i] && 
+											brick_data[pix_x - current_brick_left] &&
                                 (REGION_X_L+(i%COL_BRICKS)*BRICK_WIDTH <= pix_x) && 
                                 (pix_x <= REGION_X_L+(i%COL_BRICKS+1)*BRICK_WIDTH - 1) &&
                                 (REGION_Y_T+(i/COL_BRICKS)*BRICK_HEIGHT <= pix_y) && 
                                 (pix_y <= REGION_Y_T+(i/COL_BRICKS+1)*BRICK_HEIGHT - 1));
+	  assign brick_rgb[i] = brick_color[12*(i % 3)+11:12*(i % 3)];//[(12*(i % 3)+11):(12*(i % 3))]; // red
    end
    assign brick_on = |brick_on_sub; // in any on brick region
    // brick rgb output
-   assign brick_rgb = 12'h00f; // red
+   
 
    //--------------------------------------------
    // right vertical bar
@@ -172,10 +201,6 @@ module pong_graph
       if (gra_still) // initial position of paddle
          bar_y_next = (MAX_Y-BAR_Y_SIZE)/2;
       else if (refr_tick)
-//         if ((btn == 5'h10) & (bar_y_b < (MAX_Y-1-BAR_V)))
-//            bar_y_next = bar_y_reg + BAR_V; // move down
-//         else if ((btn == 5'hc) & (bar_y_t > BAR_V)) 
-//            bar_y_next = bar_y_reg - BAR_V; // move up
          if ((btn == 5'h2) & (bar_y_b < (MAX_Y-1-BAR_V)))
             bar_y_next = bar_y_reg + BAR_V; // move down
          else if ((btn == 5'h1) & (bar_y_t > BAR_V)) 
@@ -240,11 +265,7 @@ module pong_graph
    assign ball_y_next = (gra_still) ? MAX_Y/2 :
                         (refr_tick) ? ball_y_reg+y_delta_reg :
                         ball_y_reg ;
-                        
-                        
-   
-                        
-                        
+                                   
                         
    //--------------------------------------------
    // new ball velocity
@@ -284,7 +305,8 @@ module pong_graph
             bottom = REGION_Y_T + (row + 1) * BRICK_HEIGHT - 1;
             left = REGION_X_L + col * BRICK_WIDTH;
             right = REGION_X_L + (col + 1) * BRICK_WIDTH - 1;
-
+            
+           
 
             if (!bricks_destroyed[j] &&
                  (left <= ball_x_r) && (ball_x_l <= right) &&
@@ -322,8 +344,13 @@ module pong_graph
    // rgb multiplexing circuit
    //--------------------------------------------
    always @* 
-      if (brick_on)
-         graph_rgb = brick_rgb;
+      if (brick_on) begin: color
+          integer p;
+          for (p = 0; p < NUM_BRICKS; p = p + 1) begin 
+              if (brick_on_sub[p])
+                 graph_rgb = brick_rgb[p];
+          end
+      end
       else if (bar_on)
          graph_rgb = bar_rgb;
       else if (rd_ball_on)
