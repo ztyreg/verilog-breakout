@@ -6,7 +6,7 @@ module pong_text
     input wire [3:0] dig0, dig1,
     input wire [9:0] pix_x, pix_y,
     output wire [3:0] text_on,
-    output reg [2:0] text_rgb
+    output reg [11:0] text_rgb
    );
 
    // signal declaration
@@ -60,15 +60,19 @@ module pong_text
    //   - scale to 64-by-128 font
    //-------------------------------------------
    assign logo_on = (pix_y[9:7]==2) &&
-                    (3<=pix_x[9:6]) && (pix_x[9:6]<=6);
+                    (1<=pix_x[9:6]) && (pix_x[9:6]<=8);
    assign row_addr_l = pix_y[6:3];
    assign bit_addr_l = pix_x[5:3];
    always @*
       case (pix_x[8:6])
-         3'o3: char_addr_l = 7'h50; // P
-         3'o4: char_addr_l = 7'h4f; // O
-         3'o5: char_addr_l = 7'h4e; // N
-         default: char_addr_l = 7'h47; // G
+         3'o1: char_addr_l = 7'h42; // B
+         3'o2: char_addr_l = 7'h72; // r
+         3'o3: char_addr_l = 7'h65; // e
+			3'o4: char_addr_l = 7'h61; // a
+         3'o5: char_addr_l = 7'h6b; // k
+			3'o6: char_addr_l = 7'h6f; // o
+			3'o7: char_addr_l = 7'h75; // u
+			default: char_addr_l = 7'h74; // t
       endcase
    //-------------------------------------------
    // rule region
@@ -180,14 +184,14 @@ module pong_text
    //-------------------------------------------
    always @*
    begin
-      text_rgb = 3'b110;  // background, yellow
+      text_rgb = 12'h000;  // background, yellow
       if (score_on)
          begin
             char_addr = char_addr_s;
             row_addr = row_addr_s;
             bit_addr = bit_addr_s;
             if (font_bit)
-               text_rgb = 3'b001;
+               text_rgb = 12'hfff;
          end
       else if (rule_on)
          begin
@@ -195,7 +199,7 @@ module pong_text
             row_addr = row_addr_r;
             bit_addr = bit_addr_r;
             if (font_bit)
-               text_rgb = 3'b001;
+               text_rgb = 12'hfff;
          end
       else if (logo_on)
          begin
@@ -203,7 +207,7 @@ module pong_text
             row_addr = row_addr_l;
             bit_addr = bit_addr_l;
             if (font_bit)
-               text_rgb = 3'b011;
+               text_rgb = 12'hfff;
          end
       else // game over
          begin
@@ -211,7 +215,7 @@ module pong_text
             row_addr = row_addr_o;
             bit_addr = bit_addr_o;
             if (font_bit)
-               text_rgb = 3'b001;
+               text_rgb = 12'hfff;
          end
    end
 
