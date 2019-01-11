@@ -136,7 +136,7 @@ module Top(
    //=======================================================
 	   // instantiate graph module
     pong_graph graph_unit
-        (.clk(clk), .reset(!rstn), .btn(keyCode),
+        (.clk(clkdiv), .reset(!rstn), .btn(keyCode),
         .pix_x(col_addr), .pix_y(row_addr),
         .gra_still(SW[0]), .hit(hit), .miss(miss),
         .graph_on(graph_on), .graph_rgb(graph_rgb));
@@ -192,7 +192,7 @@ module Top(
 //			vga_data <= SW[12:1];
 //		else vga_data <= 12'hfff;
 //	end
-    wire [18:0] d;
+    wire [18:0] blk_mem_0_d;
 
     
 //    vgaIP ip1(.clock(clk),
@@ -208,9 +208,9 @@ module Top(
 //    );
     
     
-    blk_mem_gen_0(.clka(clkdiv[2]), .addra(d), .douta(ip_out));
+    blk_mem_gen_0(.clka(clkdiv), .addra(blk_mem_0_d), .douta(ip_out));
 
-    assign d = row_addr * 640 + col_addr;
+    assign blk_mem_0_d = row_addr * 640 + col_addr;
 
 	assign segTestData = {7'b0,x,8'b0,y};
 	wire [15:0] ledData;
