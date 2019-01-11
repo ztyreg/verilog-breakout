@@ -23,7 +23,9 @@
 module Top(
 	input clk,
 	input rstn,
-	input [15:0]SW,
+	input [15:0] SW,
+	input PS2_clk,
+	input PS2_data,
 	output hs,
 	output vs,
 	output [3:0] r,
@@ -52,10 +54,12 @@ module Top(
 	wire [15:0] SW_OK;
 	AntiJitter #(4) a0[15:0](.clk(clkdiv[15]), .I(SW), .O(SW_OK));
 	
-	wire [4:0] keyCode;
+	wire [4:0] keyCodeBoard, keyCodePad, keyCode;
+	
 	wire keyReady;
-	Keypad k0 (.clk(clkdiv[15]), .keyX(BTN_Y), .keyY(BTN_X), 
-	   .keyCode(keyCode), .ready(keyReady));
+	ps2tokey tokey(.clk(clk),.PS2_clk(PS2_clk),.PS2_data(PS2_data),.key_pressed(keyCodeBoard));
+	Keypad k0 (.clk(clkdiv[15]), .keyX(BTN_Y), .keyY(BTN_X),.keyCode(keyCodePad), .ready(keyReady));
+	assign keyCode = (keyCodeBoard == 0) ? keyCodeBoard : keyCodePad;
 	
 	wire [31:0] segTestData;
 	wire [3:0]sout;

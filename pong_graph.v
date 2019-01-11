@@ -18,18 +18,18 @@ module pong_graph
    //--------------------------------------------
    // bricks
    //--------------------------------------------
-   localparam NUM_BRICKS = 2; // 6*8
-   localparam ROW_BRICKS = 1;//
-   localparam COL_BRICKS = 2;//
+   localparam NUM_BRICKS = 48; // 6*8
+   localparam ROW_BRICKS = 6;//
+   localparam COL_BRICKS = 8;//
    localparam BRICK_HEIGHT = 70; // 6*70+60=480
    localparam BRICK_WIDTH = 35; // 35*8=280
    // bricks region boundary
    localparam REGION_X_L = 40;
-   localparam REGION_X_R = 110;//
+   localparam REGION_X_R = 320;//
    localparam REGION_Y_T = 30;
-   localparam REGION_Y_B = 100;//
-   reg [1:0] bricks_destroyed = 2'b0;//
-   reg [1:0] bricks_destroyed_next = 2'b0;
+   localparam REGION_Y_B = 450;//
+   reg [47:0] bricks_destroyed = 48'b0;//*
+   reg [47:0] bricks_destroyed_next = 48'b0;//*
    //--------------------------------------------
    // right vertical bar
    //--------------------------------------------
@@ -172,9 +172,13 @@ module pong_graph
       if (gra_still) // initial position of paddle
          bar_y_next = (MAX_Y-BAR_Y_SIZE)/2;
       else if (refr_tick)
-         if ((btn == 5'h10) & (bar_y_b < (MAX_Y-1-BAR_V)))
+//         if ((btn == 5'h10) & (bar_y_b < (MAX_Y-1-BAR_V)))
+//            bar_y_next = bar_y_reg + BAR_V; // move down
+//         else if ((btn == 5'hc) & (bar_y_t > BAR_V)) 
+//            bar_y_next = bar_y_reg - BAR_V; // move up
+         if ((btn == 5'h2) & (bar_y_b < (MAX_Y-1-BAR_V)))
             bar_y_next = bar_y_reg + BAR_V; // move down
-         else if ((btn == 5'hc) & (bar_y_t > BAR_V)) 
+         else if ((btn == 5'h1) & (bar_y_t > BAR_V)) 
             bar_y_next = bar_y_reg - BAR_V; // move up
    end 
    
@@ -275,63 +279,11 @@ module pong_graph
          for (j = 0; j < NUM_BRICKS; j = j + 1)
          begin: pass // for every brick
             col = j % COL_BRICKS;
-            row = j / ROW_BRICKS;
+            row = j / COL_BRICKS;
             top = REGION_Y_T + row * BRICK_HEIGHT;
             bottom = REGION_Y_T + (row + 1) * BRICK_HEIGHT - 1;
             left = REGION_X_L + col * BRICK_WIDTH;
             right = REGION_X_L + (col + 1) * BRICK_WIDTH - 1;
-            
-            
-            
-            
-//            if (!bricks_destroyed[j] &&
-//                 (left <= ball_x_r) && 
-//                 (ball_x_l <= right) &&
-//                 (top <=ball_y_b) && 
-//                 (ball_y_t<= bottom))
-//            begin
-//                if ((left<=ball_x_r) && // l<br
-//                     (ball_x_r<=right) && // br<r
-//                     (top<=ball_y_b) && // t<bb
-//                     (ball_y_t<=bottom)) // bt<b
-//                begin // hit from l
-//                  x_delta_next <= BALL_V_N;
-//                  hit <= 1'b1;
-//                  bricks_destroyed[j] <= 1;
-//                  disable loop;
-//                end
-//                else if ((right>=ball_x_l) && // r>bl
-//                     (ball_x_l>=left) && // bl>l
-//                     (top<=ball_y_b) && // t<bb
-//                     (ball_y_t<=bottom)) // bt<b
-//                begin // hit from r
-//                  x_delta_next <= BALL_V_P;
-//                  hit <= 1'b1;
-//                  bricks_destroyed[j] <= 1;
-//                  disable loop;
-//                end
-//                else if ((left<=ball_x_r) && // l<br
-//                     (ball_x_l<=right) && // bl<r
-//                     (top<=ball_y_b) && // t<bb
-//                     (ball_y_b<=bottom)) // bb<b
-//                begin // hit from t
-//                  y_delta_next <= BALL_V_N;
-//                  hit <= 1'b1;
-//                  bricks_destroyed[j] <= 1;
-//                  disable loop;
-//                end
-//                else if ((left<=ball_x_r) && // l<br
-//                     (ball_x_l<=right) && // bl<r
-//                     (bottom>=ball_y_t) && // b>bt
-//                     (ball_y_t>=top)) // bt>t
-//                begin // hit from b
-//                  y_delta_next <= BALL_V_P;
-//                  hit <= 1'b1;
-//                  bricks_destroyed[j] <= 1;
-//                  disable loop;
-//                end
-//             end
-
 
 
             if (!bricks_destroyed[j] &&
