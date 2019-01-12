@@ -354,9 +354,9 @@ module pong_graph
       else if (rd_ball_on)
            graph_rgb = ball_rgb;
       else
-            graph_rgb = 12'hff0; // cyan background
+            graph_rgb = 12'h000; // cyan background
    // new graphic_on signal
-   assign graph_on = brick_on | bar_on | rd_ball_on;
+   assign graph_on = brick_on | bar_on | rd_ball_on| gra_still;
 
 endmodule
 

@@ -51,11 +51,11 @@ module Top(
 		clkdiv <= clkdiv + 1'b1;
 	end
 	assign buzzer = 1'b1;
+	
 	wire [15:0] SW_OK;
 	AntiJitter #(4) a0[15:0](.clk(clkdiv[15]), .I(SW), .O(SW_OK));
 	
 	wire [4:0] keyCodeBoard, keyCodePad, keyCode;
-	
 	wire keyReady;
 	ps2tokey tokey(.clk(clk),.PS2_clk(PS2_clk),.PS2_data(PS2_data),.key_pressed(keyCodeBoard));
 	//Keypad k0 (.clk(clkdiv[15]), .keyX(BTN_Y), .keyY(BTN_X),.keyCode(keyCodePad), .ready(keyReady));
@@ -75,48 +75,39 @@ module Top(
 	
 	reg [3:0] x = 4'd4;
 	reg [3:0] y = 4'd8;
-	
  	reg [11:0] rgb_reg, rgb_next;
  	wire [9:0] col_addr;
  	wire [9:0] row_addr;
 	wire [19:0] x_sqr, y_sqr, r_sqr;
     wire [11:0] ip_out;
     wire [11:0] data_in;
-    
-    wire video_on, graph_on;
+    wire graph_on;
     wire [3:0] text_on;
+    reg [1:0] state_reg, state_next;
     
-    assign data_in = (graph_on)? rgb_reg : ip_out;
-	
+    
+ 
+    localparam
+        play    = 1'b0,
+        over    = 1'b1;
+    //=======================================================
+    // VGA
+    //=======================================================
+        
+    assign data_in = (graph_on || (text_on[0]&&state_reg==over)) ? rgb_reg : ip_out;
 	vgac v0 (
 		.vga_clk(clkdiv[1]), .clrn(SW_OK[15]), .d_in(data_in), 
 		.row_addr(row_addr), .col_addr(col_addr), 
 		.r(r), .g(g), .b(b), .hs(hs), .vs(vs)
 	);
-	reg wasReady;
-
-	
-    ///////////////////
-	// Breakout part //
-	///////////////////
-    localparam  [1:0]
-        newgame = 2'b00,
-        play    = 2'b01,
-        newball = 2'b10,
-        over    = 2'b11;
-        
-	
-	reg [1:0] state_reg, state_next;
-	reg [1:0] ball_reg, ball_next;
 	
 	wire [11:0] graph_rgb, text_rgb;
-	
-	reg gra_still;
 	wire hit, miss;
-	
 	wire [3:0] dig0, dig1;
+	reg game_over;
+	wire graph_still;
 	
-	assign video_on = 1'b1;
+	assign graph_still = SW_OK[0] || game_over;
 	
    //=======================================================
    // instantiation
@@ -125,20 +116,21 @@ module Top(
     pong_graph graph_unit
         (.clk(clkdiv), .reset(!rstn), .btn(keyCodeBoard),
         .pix_x(col_addr), .pix_y(row_addr),
-        .gra_still(SW[0]), .hit(hit), .miss(miss),
+        .gra_still(graph_still), .hit(hit), .miss(miss),
         .graph_on(graph_on), .graph_rgb(graph_rgb));
         
-//    pong_text text_unit
-//      (.clk(clk),
-//       .pix_x(col_addr), .pix_y(row_addr),
-//       .dig0(dig0), .dig1(dig1), .ball(ball_reg),
-//       .text_on(text_on), .text_rgb(text_rgb));
+    pong_text text_unit
+      (.clk(clk),
+       .pix_x(col_addr), .pix_y(row_addr),
+       .dig0(4'b0), .dig1(4'b0), .ball(2'b0),
+       .text_on(text_on), .text_rgb(text_rgb));
 	
 
    //=======================================================
    // finite state machine
    //=======================================================
-   reg d_inc, d_clr;
+   reg d_inc;
+   wire d_clr;
    reg timer_start;
    wire timer_up;
    wire timer_tick = (col_addr==0) && (row_addr==0);
@@ -151,113 +143,67 @@ module Top(
       (.clk(clk), .reset(!rstn), .d_inc(d_inc), .d_clr(d_clr),
        .dig0(dig0), .dig1(dig1));
 
-	always @(posedge clk, negedge rstn)
-       if (!rstn | !SW[0]) begin
-         state_reg <= play;
-         ball_reg <= 0;
-         rgb_reg <= 12'h000;
-         d_clr = 1'b1;
-      end
+	always @(posedge clk)
+      if (!SW[0]) begin
+			if(state_next == over)
+				state_reg <= state_next;
+			else
+				state_reg <= play;
+         rgb_reg <= rgb_next;
+       end else if (!SW[1]) begin
+            state_reg <= play;
+            rgb_reg <= rgb_next;
+       end
        else begin
          state_reg <= state_next;
-         ball_reg <= ball_next;
-//            if (pixel_tick)
          rgb_reg <= rgb_next;
-         d_clr = 1'b0;
        end
     
-       always @* begin
-//      timer_start = 1'b0;
+    assign d_clr = (SW[0] == 1) ? 1 : 0;
+    
+    always @* begin
+      timer_start = 1'b0;
       d_inc = 1'b0;
-      d_clr = 1'b0;
       state_next = state_reg;
-      ball_next = ball_reg;
+      game_over = 1'b0;
       case (state_reg)
-//         newgame: begin
-//               ball_next = 2'b11; // three balls
-//               d_clr = 1'b1;      // clear score
-////               if (btn != 2'b00)  // button pressed
-////                  begin
-//                     state_next = play;
-////                     ball_next = ball_reg - 1;
-////                  end
-//         end
          play: begin
            if (hit)
               d_inc = 1'b1;   // increment score
            else if (miss) begin
-//                     if (ball_reg==0)
-                    state_next = over;
-//                     else
-//                        state_next = newball;
-                 timer_start = 1'b1;  // 2 sec timer
-//                 ball_next = ball_reg - 1;
-            end
+                state_next = over;
+           end
           end
-         newball:
-            // wait for 2 sec and until button pressed
-            if (timer_up)
-                state_next = play;
-         over:
+         over: begin
             // wait for 2 sec to display game over
-            if (timer_up)
-                state_next = newgame;
+                game_over = 1'b1;
+                state_next = over;
+            end
        endcase
     end
+    
    //=======================================================
    // rgb multiplexing circuit
    //=======================================================
     always @*
-      if (~video_on)
-         rgb_next = "000"; // blank the edge/retrace
-      else
-         // display score, rule, or game over
-//         if (text_on[3] ||
-//               ((state_reg==newgame) && text_on[1]) || // rule
-//               ((state_reg==over) && text_on[0]))
-//            rgb_next = text_rgb;
-//         else 
-            if (graph_on)  // display graph
-           rgb_next = graph_rgb;
-//         else if (text_on[2]) // display logo
-//           rgb_next = text_rgb;
-         else
-           rgb_next = 12'hff0; // yellow background
+       if((text_on[2] & SW[0] == 1) || (text_on[0]&&state_reg==over))
+          rgb_next = text_rgb;
+       else if (graph_on)  // display graph
+          rgb_next = graph_rgb;
+       else
+          rgb_next = 12'h000; // black background
    
 
     wire [18:0] blk_mem_0_d;
-
     blk_mem_gen_0 blk0(.clka(clkdiv), .addra(blk_mem_0_d), .douta(ip_out));
-
     assign blk_mem_0_d = row_addr * 640 + col_addr;
     
-//     reg [7:0] counter;
-//     initial begin
-//        counter = 8'd0;
-//     end
-//     always @(posedge clk) begin
-//         if (hit) begin
-//           if(counter[3:0] < 4'd9)
-//                counter[3:0] <= counter[3:0] + 4'd1;
-//            else if(counter[3:0] == 4'd9)begin
-//                counter[3:0] <= 4'd0;
-//                if(counter[7:4] < 4'd9)
-//                    counter[7:4] <= counter[7:4] + 4'd1;
-//                else
-//                    counter[7:4] <= 4'd0;
-//            end
-//        end
-//     end
 
 	assign segTestData = {24'd0, dig1, dig0};
 	wire [15:0] ledData;
 	assign ledData = SW_OK;
-	
 	ShiftReg #(.WIDTH(16)) ledDevice (.clk(clkdiv[3]), 
 	.pdata(~ledData), .sout({LED_CLK,LED_DO,LED_PEN,LED_CLR}));
     
-    // counter
-
-
 endmodule
 
