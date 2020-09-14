@@ -4,6 +4,10 @@ This is a Verilog breakout game.
 
 The project can be built in either Xilinx ISE or Vivado.
 
+It will need an FPGA and an external VGA display.
+
+## Files
+
 `*.v`: verilog source files
 
 `Top.bit`: output binary file
