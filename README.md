@@ -12,4 +12,10 @@ The project can be built in either Xilinx ISE or Vivado.
 
 `k.xdc`: Vivado constraint file
 
+## Demo
+
 <img src="breakout.png" alt="demo" height="200pt"/>
+
+Press `SPACE` to start the game.
+
+Use `←` `→` to move.
