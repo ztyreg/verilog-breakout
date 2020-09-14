@@ -135,16 +135,19 @@ module pong_graph
 	else if(brick_addr >= 7'd7 && brick_addr <= 7'd62)
 		brick_data = 35'b01111111111111111111111111111111110; // ********
 
-
+   reg [23:0] r1;
+   reg [23:0] r2;
    // registers
    always @(posedge clk, posedge reset)
       if (reset)
          begin
-            bar_y_reg <= 0;
-            ball_x_reg <= 0;
-            ball_y_reg <= 0;
-            x_delta_reg <= 10'h004;
-            y_delta_reg <= 10'h004;
+            bar_y_reg <= (MAX_Y - BAR_Y_SIZE) / 2;
+            ball_x_reg <= BAR_X_L - BALL_SIZE;
+            ball_y_reg <= (MAX_Y - BALL_SIZE) / 2;
+            r1 = $random%2;
+            r2 = $random%2;
+            x_delta_reg = (r1 == 0) ? -1 : r1;
+            y_delta_reg = (r2 == 0) ? 1 : r2;
          end   
       else
          begin
@@ -191,7 +194,7 @@ module pong_graph
    assign bar_on = (BAR_X_L<=pix_x) && (pix_x<=BAR_X_R) &&
                    (bar_y_t<=pix_y) && (pix_y<=bar_y_b); 
    // bar rgb output
-   assign bar_rgb = 12'h0f0; // green
+   assign bar_rgb = 12'hfda; // green
    // new bar y-position
    always @*
    begin
@@ -205,35 +208,6 @@ module pong_graph
             bar_y_next = bar_y_reg - BAR_V; // move up
    end 
    
-   //--------------------------------------------
-   // left vertical bar AI
-   //--------------------------------------------
-   // boundary
-//   assign ai_y_t = ai_y_reg;
-//   assign ai_y_b = ai_y_t + AI_Y_SIZE - 1;
-//   // pixel within AI
-//   assign ai_on = (AI_X_L<=pix_x) && (pix_x<=AI_X_R) &&
-//                   (ai_y_t<=pix_y) && (pix_y<=ai_y_b); 
-//   // AI rgb output
-//   assign ai_rgb = 12'h0f0; // green
-   
-//   wire ai_y_next_in, ai_y_next_out;
-//   wire [7:0] ai_next_list;
-//   // new AI y-position
-//   always @*
-//   begin
-//      ai_y_next = (ball_y_t > ai_y_t - AI_Y_SIZE / 2) ? 0 : 1; // no move
-//      if (gra_still) // initial position of paddle
-//         ai_y_next = (MAX_Y-AI_Y_SIZE)/2;
-//      else if (refr_tick)
-//         if ((ai_next_list[7] == 1) & (ai_y_b < (MAX_Y-1-AI_V)))
-//            ai_y_next = ai_y_reg + AI_V; // move down
-//         else if ((ai_next_list[7] == 0) & (ai_y_t > AI_V)) 
-//            ai_y_next = ai_y_reg - AI_V; // move up
-//   end 
-   
-//   shift_reg s0(.clk(clk), .S_L(1'b0), .s_in(ai_y_next), .R_S(1'b0), 
-//                .p_in(7'b0), .Q(ai_next_list));
 
    //--------------------------------------------
    // square ball
@@ -254,7 +228,7 @@ module pong_graph
    // pixel within ball
    assign rd_ball_on = sq_ball_on & rom_bit;
    // ball rgb output
-   assign ball_rgb = 12'hf00;   // red
+   assign ball_rgb = 12'hacf;   // red
   
    // new ball position
    assign ball_x_next = (gra_still) ? MAX_X/2 :
@@ -268,6 +242,8 @@ module pong_graph
    //--------------------------------------------
    // new ball velocity
    //--------------------------------------------
+   reg [23:0] rand1;
+   reg [23:0] rand2;
    always @*   
    begin
       hit = 1'b0;
@@ -277,9 +253,11 @@ module pong_graph
       bricks_destroyed_next = bricks_destroyed;
       if (gra_still)     // initial velocity
          begin
-            x_delta_next = BALL_V_N;
-            y_delta_next = BALL_V_P;
-            bricks_destroyed_next = 2'b0;
+            rand1 = $random%2;
+            rand2 = $random%2;
+            x_delta_next = (rand1 == 0) ? -1 : rand1;
+            y_delta_next = (rand2 == 0) ? 1 : rand2;
+            bricks_destroyed_next = 48'b0;
          end   
       else if (ball_y_t < 1) // reach top
          y_delta_next = BALL_V_P;
